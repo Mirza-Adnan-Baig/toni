@@ -22,6 +22,9 @@ class Ears:
         path = MODELS / f"whisper-{cfg['whisper_model']}"
         # CPU keeps the GPU free for the language model. int8 is fast and accurate enough.
         self.model = WhisperModel(str(path), device="cpu", compute_type="int8", cpu_threads=8)
+        # Tiny model (2 threads) is the always-on wake-word checker: very cheap, only runs when someone speaks.
+        self.wake = WhisperModel(str(MODELS / f"whisper-{cfg['wake_model']}"), device="cpu",
+                                 compute_type="int8", cpu_threads=2)
         self.prompt = f"{cfg['name']}, {cfg['name']}."
         self.noise = 0.005
         self.stop = None
@@ -52,8 +55,20 @@ class Ears:
         audio = np.concatenate(frames)
         return audio if len(audio) / SR > 0.35 else None
 
-    def transcribe(self, audio):
-        segs, _ = self.model.transcribe(audio, language=self.lang, beam_size=1, vad_filter=True,
+    def listen_wake(self, wait_s, is_wake):
+        """Idle listening. Cheap tiny-model check; only if the wake word is heard, re-transcribe with the good model."""
+        audio = self._record(wait_s, max_s=6)
+        if audio is None:
+            return None
+        segs, _ = self.wake.transcribe(audio, language=self.lang, beam_size=1, vad_filter=True,
+                                       initial_prompt=self.prompt, condition_on_previous_text=False)
+        quick = " ".join(s.text.strip() for s in segs).strip()
+        if not quick or not is_wake(quick):
+            return None
+        return self.transcribe(audio) or quick
+
+    def transcribe(self, audio, model=None):
+        segs, _ = (model or self.model).transcribe(audio, language=self.lang, beam_size=1, vad_filter=True,
                                         initial_prompt=self.prompt, condition_on_previous_text=False)
         return " ".join(s.text.strip() for s in segs).strip() or None
 

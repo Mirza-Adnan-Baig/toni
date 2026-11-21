@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nova Workspace</title>
+<style>
+:root{--bg:#0e1116;--card:#171c24;--line:#262d38;--txt:#e6eaf0;--mut:#8b95a5;--acc:#4cc2ff;--ok:#4ade80;--warn:#fbbf24}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--txt);font:14px/1.5 system-ui,Segoe UI,sans-serif;display:flex}
+button,select,input,textarea{font:inherit;color:var(--txt);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+button{cursor:pointer}button:hover{border-color:var(--acc)}
+.ib{border:0;background:none;padding:0 5px;color:var(--mut)}.ib:hover{color:var(--txt)}
+#left{width:270px;border-right:1px solid var(--line);display:flex;flex-direction:column;background:#0b0e13}
+#right{width:340px;border-left:1px solid var(--line);display:flex;flex-direction:column;background:#0b0e13}
+#main{flex:1;display:flex;flex-direction:column;min-width:0}
+.hd{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+.hd h1{font-size:15px;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#plist{flex:1;overflow:auto;padding:8px}
+.proj{margin-bottom:6px}.prow,.crow{display:flex;align-items:center;border-radius:8px;padding:4px 6px;cursor:pointer}
+.prow{font-weight:600}.prow:hover,.crow:hover{background:#151b24}
+.crow{margin-left:16px;color:#c3cad6}.crow.sel{background:#12304a;color:#fff}
+.nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.miss{color:var(--warn);font-weight:400;font-size:12px}
+#orb{width:12px;height:12px;border-radius:50%;background:var(--mut)}
+#orb.listening{background:var(--ok)}#orb.thinking{background:var(--warn);animation:p 1s infinite}#orb.speaking{background:var(--acc);animation:p .6s infinite}
+@keyframes p{50%{transform:scale(1.4)}}
+#log{flex:1;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:9px}
+.m{max-width:78%;padding:9px 13px;border-radius:13px;white-space:pre-wrap;word-wrap:break-word}
+.user{align-self:flex-end;background:#1d4ed8}.assistant{align-self:flex-start;background:var(--card);border:1px solid var(--line)}
+.tool{align-self:flex-start;color:var(--mut);font:12px/1.4 Consolas,monospace;background:#10151c;border-left:3px solid var(--acc);border-radius:4px;padding:4px 8px;max-width:90%;word-break:break-all}
+.small{align-self:center;color:var(--mut);font-size:12px}
+.confirm{align-self:center;background:#3b2f0b;border:1px solid var(--warn);padding:12px 16px;border-radius:12px;max-width:90%}
+.confirm code{display:block;margin:6px 0;color:#ffe08a;word-break:break-all}
+form{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--line)}form input[type=text]{flex:1}
+#empty{margin:auto;color:var(--mut);text-align:center}
+.tabs{display:flex;border-bottom:1px solid var(--line)}.tabs button{flex:1;border:0;border-radius:0;background:none;padding:11px;color:var(--mut)}
+.tabs button.on{color:var(--txt);box-shadow:inset 0 -2px var(--acc)}
+.pane{flex:1;overflow:auto;padding:12px;display:none}.pane.on{display:block}
+.frow{display:flex;gap:6px;align-items:center;padding:3px 6px;border-radius:6px;cursor:pointer}.frow:hover{background:#151b24}
+#viewer{display:none}#viewer pre{white-space:pre-wrap;word-break:break-word;background:var(--card);padding:10px;border-radius:8px;max-height:60vh;overflow:auto;font:12px/1.45 Consolas,monospace}
+label{display:block;margin:11px 0 3px;color:var(--mut);font-size:12px}.pane input[type=text],.pane select{width:100%}
+.row{display:flex;align-items:center;gap:8px;margin-top:10px}
+.pri{background:var(--acc);color:#04202e;border:0;font-weight:600}
+a.back{color:var(--mut);text-decoration:none;font-size:13px}
+@media(max-width:1000px){#right{display:none}}@media(max-width:700px){#left{display:none}}
+</style></head><body>
+<aside id="left">
+ <div class="hd"><a class="back" href="/">&larr; Companion</a><span style="flex:1"></span>
+  <button class="ib" title="New project" id="np">+ New</button><button class="ib" title="Add an existing folder" id="ap">Add folder</button></div>
+ <div id="plist"></div>
+</aside>
+<section id="main">
+ <div class="hd"><h1 id="title">Workspace</h1><span id="st" style="color:var(--mut);font-size:12px"></span><div id="orb"></div>
+  <button id="stop">Stop</button></div>
+ <div id="log"><div id="empty">Select a chat on the left,<br>or create a project to begin.</div></div>
+ <form id="f"><input type="text" id="q" placeholder="Message Nova about this project..." autocomplete="off">
+  <label style="margin:0;display:flex;align-items:center;gap:5px"><input type="checkbox" id="spk">read aloud</label><button class="pri">Send</button></form>
+</section>
+<aside id="right">
+ <div class="tabs"><button id="t1" class="on">Files</button><button id="t2">Settings</button></div>
+ <div class="pane on" id="p1">
+  <div style="display:flex;gap:6px;margin-bottom:8px"><span id="crumb" style="flex:1;color:var(--mut);word-break:break-all"></span>
+   <button class="ib" id="openf" title="Open this folder in Windows Explorer">Open folder</button></div>
+  <div id="files"></div>
+  <div id="viewer"><div style="display:flex;gap:6px;margin-bottom:6px"><button id="vback">&larr; Back</button><button id="vopen">Open</button><span id="vname" style="color:var(--mut);align-self:center"></span></div><pre id="vtext"></pre></div>
+ </div>
+ <div class="pane" id="p2">
+  <label>Language / Sprache</label><select id="language"><option value="en">English</option><option value="de">Deutsch</option></select>
+  <label>Name</label><input type="text" id="name">
+  <label>Wake words (comma separated)</label><input type="text" id="wake_words">
+  <label>English voice</label><select id="voice_en"></select>
+  <label>German voice</label><select id="voice_de"></select>
+  <label>Speaking speed: <span id="sv"></span></label><input id="speed" type="range" min="0.7" max="1.4" step="0.05" style="width:100%">
+  <label>AI model (Ollama name)</label><input type="text" id="model">
+  <label>Folder for NEW projects</label><div style="display:flex;gap:6px"><input type="text" id="projects_dir"><button id="browse">Browse</button></div>
+  <div class="row"><input type="checkbox" id="ask_before_commands"><span>Ask before running PC commands</span></div>
+  <div class="row"><input type="checkbox" id="autostart_voice"><span>Listen as soon as Nova starts</span></div>
+  <div class="row"><input type="checkbox" id="autostart"><span>Start Nova when Windows starts</span></div>
+  <button id="save" class="pri" style="width:100%;margin-top:16px;padding:10px">Save and apply</button>
+  <button id="quit" style="width:100%;margin-top:10px">Quit Nova (stops listening)</button>
+ </div>
+</aside>
+<script>
+const T="__TOKEN__",$=i=>document.getElementById(i),log=$("log");
+const api=(p,b)=>fetch(p,{method:b?"POST":"GET",headers:{"X-Token":T,"Content-Type":"application/json"},body:b?JSON.stringify(b):undefined}).then(async r=>{const j=await r.json();if(!r.ok)throw new Error(j.error||r.status);return j});
+const qs=o=>new URLSearchParams(o).toString(),err=e=>alert(e.message||e);
+const S={projects:[],project:null,chat:null,open:new Set(),last:0,seq:-1,path:"",file:null,cfg:{}};
+// ---------- left panel ----------
+async function loadProjects(){S.projects=await api("/api/projects");renderLeft()}
+function btn(t,title,fn){const b=document.createElement("button");b.className="ib";b.textContent=t;b.title=title;b.onclick=e=>{e.stopPropagation();fn()};return b}
+function renderLeft(){const L=$("plist");L.innerHTML="";
+ for(const p of S.projects){const w=document.createElement("div");w.className="proj";
+  const r=document.createElement("div");r.className="prow";r.title=p.path;
+  const nm=document.createElement("span");nm.className="nm";nm.textContent=(S.open.has(p.name)?"▾ ":"▸ ")+p.name;r.appendChild(nm);
+  if(p.missing){const m=document.createElement("span");m.className="miss";m.textContent="missing";r.appendChild(m)}
+  else r.appendChild(btn("+","New chat",()=>newChat(p.name)));
+  r.appendChild(btn("✎","Rename project",()=>renameProject(p.name)));
+  r.appendChild(btn("✕","Remove from list (files stay on disk)",()=>removeProject(p.name)));
+  r.onclick=()=>{S.open.has(p.name)?S.open.delete(p.name):S.open.add(p.name);if(!p.missing&&p.chats[0]&&S.project!=p.name)select(p.name,p.chats[0].id);renderLeft()};
+  w.appendChild(r);
+  if(S.open.has(p.name))for(const c of p.chats){const cr=document.createElement("div");cr.className="crow"+(S.project==p.name&&S.chat==c.id?" sel":"");
+   const t=document.createElement("span");t.className="nm";t.textContent=c.title;cr.appendChild(t);
+   cr.appendChild(btn("✎","Rename chat",()=>renameChat(p.name,c)));cr.appendChild(btn("✕","Delete chat",()=>delChat(p.name,c)));
+   cr.onclick=()=>select(p.name,c.id);w.appendChild(cr)}
+  L.appendChild(w)}}
+async function newProject(){const name=prompt("Name of the new project:");if(!name)return;
+ let parent="";if(!confirm("Create it inside:\n"+S.cfg.projects_dir+"\n\nOK = use this folder\nCancel = choose another folder (e.g. on D:)")){
+  parent=(await api("/api/pick",{initial:S.cfg.projects_dir})).path;if(!parent)return}
+ try{const r=await api("/api/project/new",{name,parent});S.seq=r.seq;S.open.add(r.name);await loadProjects();follow()}catch(e){err(e)}}
+async function addProject(){const path=(await api("/api/pick",{})).path;if(!path)return;
+ try{const r=await api("/api/project/add",{path});S.seq=r.seq;S.open.add(r.name);await loadProjects();follow()}catch(e){err(e)}}
+async function renameProject(n){const v=prompt("New project name:",n);if(v&&v!=n)try{await api("/api/project/rename",{name:n,new:v});await loadProjects()}catch(e){err(e)}}
+async function removeProject(n){if(confirm("Remove '"+n+"' from the list?\nYour files and chats stay on disk and are NOT deleted."))try{await api("/api/project/remove",{name:n});await loadProjects();follow()}catch(e){err(e)}}
+async function newChat(p){try{const r=await api("/api/chat/new",{project:p});S.seq=r.seq;S.open.add(p);await loadProjects();select(p,r.id,false)}catch(e){err(e)}}
+async function renameChat(p,c){const v=prompt("Chat title:",c.title);if(v)try{await api("/api/chat/rename",{project:p,id:c.id,title:v});await loadProjects()}catch(e){err(e)}}
+async function delChat(p,c){if(confirm("Delete the chat '"+c.title+"'? This cannot be undone."))try{await api("/api/chat/delete",{project:p,id:c.id});await loadProjects();follow()}catch(e){err(e)}}
+// ---------- chat ----------
+function add(cls,txt){$("empty")&&$("empty").remove();const d=document.createElement("div");d.className=cls=="tool"||cls=="small"?cls:"m "+cls;d.textContent=cls=="tool"?"⚙ "+txt:txt;log.appendChild(d);log.scrollTop=1e9}
+function confirmBox(cmd){if($("cf"))return;const d=document.createElement("div");d.className="confirm";d.id="cf";
+ d.innerHTML="<b>Nova wants to run this on your PC:</b><code></code>";d.querySelector("code").textContent=cmd;
+ for(const [t,y] of [["Allow",1],["Deny",0]]){const b=document.createElement("button");b.textContent=t;b.style.marginRight="8px";b.onclick=()=>{api("/api/confirm",{yes:y});d.remove()};d.appendChild(b)}
+ log.appendChild(d);log.scrollTop=1e9}
+async function select(p,c,post=true){S.project=p;S.chat=c;S.open.add(p);
+ try{const r=await api("/api/chat?"+qs({project:p,id:c}));log.innerHTML="";S.last=r.last_id;$("title").textContent=p+" › "+r.title;
+  for(const m of r.log)add(m.kind,m.text);if(!r.log.length)log.innerHTML='<div id="empty">New chat. Type below or just talk.</div>'}catch(e){err(e);return}
+ if(post)api("/api/active",{project:p,chat:c}).then(r=>S.seq=r.seq).catch(()=>{});
+ S.path="";S.file=null;loadFiles("");renderLeft()}
+async function follow(){const r=await api("/api/poll?since=999999999");S.seq=r.seq;if(r.active.project)select(r.active.project,r.active.chat,false)}
+async function poll(){try{const r=await api("/api/poll?since="+S.last);
+ if(r.seq!=S.seq&&r.active.project&&S.seq!=-1){S.seq=r.seq;await loadProjects();select(r.active.project,r.active.chat,false);return}
+ for(const e of r.events){S.last=e.id;
+  if(e.chat==S.chat&&["user","assistant","tool"].includes(e.kind)){add(e.kind,e.text);if(e.kind=="assistant")loadProjects();if(e.kind=="tool")loadFiles(S.path,true)}
+  else if(["status","error"].includes(e.kind))add("small",e.text);else if(e.kind=="confirm"&&r.pending)confirmBox(e.text)}
+ if(r.pending)confirmBox(r.pending.cmd);else if($("cf"))$("cf").remove();
+ $("orb").className=r.state;$("st").textContent=r.state}catch(e){$("st").textContent="disconnected"}}
+$("f").onsubmit=e=>{e.preventDefault();const t=$("q").value.trim();if(!t||!S.chat)return;$("q").value="";api("/api/send",{project:S.project,chat:S.chat,text:t,speak:$("spk").checked}).catch(err)};
+$("stop").onclick=()=>api("/api/stop",{});
+// ---------- files ----------
+async function loadFiles(path,quiet){if(!S.project)return;try{const r=await api("/api/files?"+qs({project:S.project,path}));S.path=path;
+ $("crumb").textContent="/"+path;const F=$("files");F.innerHTML="";$("viewer").style.display="none";F.style.display="block";
+ if(path){const d=document.createElement("div");d.className="frow";d.textContent="← ..";d.onclick=()=>loadFiles(path.split("/").slice(0,-1).join("/"));F.appendChild(d)}
+ for(const f of r){const d=document.createElement("div");d.className="frow";d.textContent=(f.dir?"📁 ":"📄 ")+f.name;
+  d.onclick=()=>f.dir?loadFiles((path?path+"/":"")+f.name):viewFile((path?path+"/":"")+f.name);F.appendChild(d)}
+ if(!r.length)F.innerHTML='<div style="color:var(--mut)">Empty folder. Ask Nova to create something.</div>'}catch(e){if(!quiet)$("files").textContent=e.message}}
+async function viewFile(path){try{const r=await api("/api/file?"+qs({project:S.project,path}));S.file=path;$("files").style.display="none";$("viewer").style.display="block";$("vname").textContent=path;$("vtext").textContent=r.text}catch(e){err(e)}}
+$("vback").onclick=()=>loadFiles(S.path);
+$("vopen").onclick=()=>api("/api/open",{project:S.project,path:S.file}).catch(err);
+$("openf").onclick=()=>api("/api/open",{project:S.project,path:S.path}).catch(err);
+// ---------- settings ----------
+const F=["language","name","wake_words","voice_en","voice_de","speed","model","projects_dir","ask_before_commands","autostart_voice"];
+async function loadCfg(){S.cfg=await api("/api/config");const c=S.cfg;
+ for(const k of["voice_en","voice_de"]){const s=$(k);s.innerHTML="";c.voices.filter(v=>v.startsWith(k.slice(6))).forEach(v=>s.add(new Option(v,v)))}
+ for(const k of F){const el=$(k),v=c[k];if(el.type=="checkbox")el.checked=v;else el.value=Array.isArray(v)?v.join(", "):v}
+ $("autostart").checked=c.autostart;$("sv").textContent=c.speed}
+$("speed").oninput=()=>$("sv").textContent=$("speed").value;
+$("save").onclick=async()=>{const b={};for(const k of F){const el=$(k);b[k]=el.type=="checkbox"?el.checked:el.type=="range"?+el.value:el.value}
+ try{await api("/api/config",b);setTimeout(loadCfg,900)}catch(e){err(e)}};
+$("autostart").onchange=()=>api("/api/autostart",{on:$("autostart").checked}).catch(e=>{err(e);loadCfg()});
+$("browse").onclick=async()=>{const p=(await api("/api/pick",{initial:$("projects_dir").value})).path;if(p)$("projects_dir").value=p};
+$("quit").onclick=()=>{if(confirm("Quit Nova? It will stop listening until you start it again."))api("/api/quit",{}).catch(()=>{});document.body.innerHTML='<p style="margin:40px">Nova has stopped. Double-click the Nova shortcut to start it again.</p>'};
+function tab(n){for(const i of[1,2]){$("t"+i).className=i==n?"on":"";$("p"+i).className="pane"+(i==n?" on":"")}}
+$("t1").onclick=()=>tab(1);$("t2").onclick=()=>tab(2);if(location.hash=="#settings")tab(2);
+$("np").onclick=newProject;$("ap").onclick=addProject;
+(async()=>{await loadCfg();await loadProjects();await follow();setInterval(poll,700)})();
+</script></body></html>

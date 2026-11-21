@@ -50,7 +50,7 @@ if (-not $ollama) {
 }
 if (-not $ollama) { throw "Ollama did not install. Download it from ollama.com, install it, then run this again." }
 # Faster replies: flash attention, and keep the model loaded in memory.
-foreach ($kv in @(@("OLLAMA_FLASH_ATTENTION", "1"), @("OLLAMA_KEEP_ALIVE", "24h"))) {
+foreach ($kv in @(@("OLLAMA_FLASH_ATTENTION", "1"), @("OLLAMA_KEEP_ALIVE", "10m"))) {
     [Environment]::SetEnvironmentVariable($kv[0], $kv[1], "User")
     Set-Item -Path "Env:$($kv[0])" -Value $kv[1]
 }
@@ -86,22 +86,35 @@ foreach ($v in @("en_US-amy-medium", "en_GB-jenny_dioco-medium", "de_DE-kerstin-
     }
     Write-Host "  voice ready: $v"
 }
+if (-not (Test-Path "models\whisper-tiny\model.bin")) {
+    & $venvPy -c "from faster_whisper import download_model; download_model('tiny', output_dir=r'models\whisper-tiny')"
+    if ($LASTEXITCODE -ne 0) { throw "Wake-word model download failed. Run this again." }
+}
 if (-not (Test-Path "models\whisper-small\model.bin")) {
     & $venvPy -c "from faster_whisper import download_model; download_model('small', output_dir=r'models\whisper-small')"
     if ($LASTEXITCODE -ne 0) { throw "Hearing model download failed. Run this again." }
 }
 
-Step 7 "Creating desktop shortcuts"
+Step 7 "Creating shortcuts and auto-start"
 $desk = [Environment]::GetFolderPath("Desktop")
 $sh = New-Object -ComObject WScript.Shell
-foreach ($pair in @(@("Nova", "Start Nova.bat"), @("Nova (text chat)", "Nova Text Chat.bat"), @("Nova check", "Nova Check.bat"), @("Nova language", "Language.bat"))) {
+foreach ($pair in @(@("Nova", "Start Nova.bat"), @("Nova Workspace", "Nova Workspace.bat"), @("Nova text chat", "Nova Text Chat.bat"), @("Nova check", "Nova Check.bat"), @("Nova language", "Language.bat"), @("Stop Nova", "Stop Nova.bat"))) {
     $lnk = $sh.CreateShortcut("$desk\$($pair[0]).lnk")
     $lnk.TargetPath = Join-Path $PSScriptRoot $pair[1]
     $lnk.WorkingDirectory = $PSScriptRoot
     $lnk.Save()
 }
+# Start silently (no window) every time you log in to Windows
+$startup = [Environment]::GetFolderPath("Startup")
+$lnk = $sh.CreateShortcut("$startup\Nova.lnk")
+$lnk.TargetPath = Join-Path $PSScriptRoot ".venv\Scripts\pythonw.exe"
+$lnk.Arguments = "-m toni --background"
+$lnk.WorkingDirectory = $PSScriptRoot
+$lnk.WindowStyle = 7
+$lnk.Save()
 
 Write-Host ""
 Write-Host "=== Done! ===" -ForegroundColor Green
-Write-Host "1. Double-click 'Nova check' on the desktop to test speakers, mic and brain."
-Write-Host "2. Then double-click 'Nova' (a browser window opens) and say: 'Nova, what time is it?'"
+Write-Host "1. Double-click 'Nova check' on the Desktop to test speakers, mic and brain."
+Write-Host "2. Then double-click 'Nova' and say the name, e.g. 'Nova, what time is it?'"
+Write-Host "3. 'Nova Workspace' opens projects, chats and files. Nova also starts by itself when Windows starts."

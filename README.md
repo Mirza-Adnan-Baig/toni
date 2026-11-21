@@ -68,7 +68,7 @@ What happens now - **just wait**, it says what it is doing in 7 steps:
 4. Downloads the AI brain (**13 GB** - this is the long part)
 5. Installs Nova's programs
 6. Downloads voices and the hearing model
-7. Puts shortcuts on your Desktop
+7. Puts shortcuts on your Desktop and makes Nova start quietly when Windows starts
 
 Good to know:
 - Windows may ask "Do you want to allow this app to make changes?" -> **Yes**.
@@ -87,23 +87,49 @@ The first AI answer takes up to a minute (the brain loads into the GPU). After t
 
 ## Part 2 - Use it
 
-Double-click **Nova** on the Desktop. A black window opens (keep it open - it is the engine) and your browser shows the chat page at `http://127.0.0.1:8765`.
+Nova has **two separate screens**. Both are web pages in your browser, served only by your own PC.
 
-- **Talk:** say **"Nova, ..."**, e.g. "Nova, what time is it?" / "Nova, make a number guessing game in Python and run it." / "Nova, open the calculator."
-  After an answer Nova keeps listening ~8 seconds, so you can continue without the name. Say "thanks" or "stop" to end.
-- **Type:** use the box at the bottom of the page. Tick **read aloud** to hear typed answers.
-- **Start/Stop listening:** top-right button. The coloured dot shows the state (green = listening, yellow = thinking, blue = speaking).
-- **Safety:** before running any command on the PC, Nova asks. By voice, answer "yes"/"no" (or "ja"/"nein"); in the browser, click Allow/Deny.
-- Nova works in the folder `C:\Users\<name>\Nova\workspace` (its projects appear there).
-- No browser? Use the **Nova (text chat)** shortcut.
-- To quit: close the black window.
+### 1. Companion (the "talk to someone" screen) - `Nova` shortcut
+A glowing orb that listens, thinks and speaks. This is your Jarvis-style assistant.
+- Say **"Nova, ..."**, e.g. "Nova, what time is it?" / "Nova, make a number guessing game in Python and run it."
+- Nova keeps listening ~8 seconds after answering, so you can carry on without repeating the name. Say "thanks" or "stop" to end.
+- What you said and what Nova answers appear as large captions. **Transcript** shows the whole conversation. You can also type in the box at the bottom.
+- Bottom left: microphone on/off. Bottom right: stop the current task. Top: **EN/DE** language switch.
+- Orb colours: green = listening, yellow = thinking, blue = speaking.
+- Nova **starts by itself when Windows starts**, in the background, and listens quietly. The `Nova` shortcut just shows the screen.
+- The voice conversation is its own permanent chat (inside a project called **Voice**), separate from your work chats.
+
+### 2. Workspace (like Claude Code) - `Nova Workspace` shortcut
+For real work: projects, many chats, files.
+- **Left:** your **projects**, each with its own chats. `+ New` creates a project, `Add folder` uses a folder you already have. The `+` next to a project starts a new chat.
+- **Middle:** the chat. You see every step Nova takes (files written, commands run) live. **Stop** cancels a running task.
+- **Right, Files:** the project's files (read-only view; `Open` opens a file in Windows, `Open folder` opens Explorer). **Right, Settings:** language, name, wake word, voices and more.
+- Chats are **saved automatically** and are still there after a restart, with their full history.
+- Before running any command on the PC, Nova asks (Allow/Deny button, or "yes"/"no" by voice).
+
+### Choose where projects live (not just drive C:)
+Projects can be **any folder on any drive**, for example `D:\Nova Projects\Homework`.
+- `+ New` asks for a name, then asks where to create it. Choose Cancel at that question to pick another place such as `D:\` in a normal Windows folder window.
+- `Add folder` turns an existing folder into a project.
+- Settings -> **Folder for NEW projects** sets the default location (click **Browse**).
+- Each project's chats are stored inside the project folder (hidden `.nova` folder), so moving or backing up the folder keeps everything.
+- Removing a project (`x`) only removes it from the list. **Your files are never deleted.** Whole drives, Windows folders, Program Files and AppData are refused for safety.
+- Optional: put a file named `NOVA.md` in a project folder with notes (goals, style). Nova reads it as background info.
+
+### Always listening, but light on the PC
+- A tiny speech model (about 75 MB, 2 CPU threads) only wakes up when it hears someone talk; silence costs almost nothing. The bigger model and the AI only run after your wake word.
+- The AI model is loaded into the graphics card **when you say the name** and leaves again after 10 idle minutes, so games get the full GPU back. (The first answer after a long pause takes a few seconds longer.)
+- Nova runs at low priority, so it does not slow down other programs.
+- To stop it completely: Settings -> **Quit Nova**, or the `Stop Nova` shortcut. To stop it starting with Windows: Settings -> untick **Start Nova when Windows starts**.
+- No browser page open? Nova still listens. A log is written to `C:\Nova\logs\nova.log`.
+- No microphone yet after boot? Nova retries every 10 seconds by itself.
 
 ---
 
 ## Language: English <-> German
 
 Install and test in English (default). To switch to German, any of these:
-- In the chat page: **Settings -> Language -> Deutsch -> Save and apply** (on a small window, click the **Settings** button top-right).
+- In the Companion screen: the **EN/DE** button. Or in the Workspace: **Settings -> Language -> Deutsch -> Save and apply** (on a small window, click the **Settings** button top-right).
 - Or double-click the **Nova language** shortcut and press 2 (Deutsch) or 1 (English).
 
 In German, Nova listens to German, answers in German and uses a German voice. The wake word stays the same ("Nova"). Switching takes a few seconds.
@@ -112,7 +138,7 @@ In German, Nova listens to German, answers in German and uses a German voice. Th
 
 ## Customise
 
-Everything below can be changed in the chat page under **Settings -> Save and apply**.
+Everything below can be changed in the Workspace under **Settings -> Save and apply**.
 
 ### Change the wake word (the name you call)
 1. Settings -> **Name** = what Nova calls itself, e.g. `Atlas`.
