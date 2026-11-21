@@ -148,16 +148,13 @@ Everything below can be changed in the Workspace under **Settings -> Save and ap
 Tips: pick a name with 2-3 clear syllables that is not an everyday word ("Nova", "Atlas", "Friday" work well). If it does not react, look at the grey `heard: ...` lines in the chat to see how your word was understood, and add that spelling to the wake words. English and German hearing may spell a name differently, so add both.
 
 ### Change the voice
-- Settings -> **English voice** / **German voice** (dropdowns). Included, all female:
-  - English: `en_US-amy-medium` (default), `en_GB-jenny_dioco-medium`
-  - German: `de_DE-kerstin-medium` (default), `de_DE-ramona-low`
+- Workspace -> Settings -> **English voice** / **German voice**. Press **Listen** next to a dropdown to hear the voice before choosing, then **Save and apply**.
+- Installed voices (about 40):
+  - **Kokoro** (English only, the most natural-sounding): many female and male voices, US and UK. Default: Heart.
+  - **Piper** (English and German): e.g. `en_US-lessac-high`, `en_GB-cori-high`, `de_DE-kerstin-medium`, `de_DE-ramona-low`, `de_DE-thorsten-high` (male), `de_DE-mls-medium`.
+  - German voices are currently Piper only. They sound more synthetic than Kokoro's English ones.
 - **Speaking speed** slider (1.0 is normal).
-- More voices (male ones, other accents): browse https://rhasspy.github.io/piper-samples/ , then in PowerShell:
-  ```powershell
-  cd C:\Nova
-  .venv\Scripts\python.exe -m piper.download_voices de_DE-thorsten-medium --download-dir models\piper
-  ```
-  Reload the chat page; the new voice appears in the dropdown. (Needs internet once.)
+- More Piper voices: listen at https://rhasspy.github.io/piper-samples/ , then type the voice name (e.g. `de_DE-thorsten-high`) into **Add another Piper voice** in Settings and press Add. Needs internet once.
 
 ### Other options
 - **AI model:** any model from https://ollama.com/library . Example: `ollama pull qwen3:14b` in PowerShell, then type `qwen3:14b` in Settings. Models up to ~14 GB run fast on the 5080. (Default `gpt-oss:20b` is tested for tool use; others are optional and may behave differently.)

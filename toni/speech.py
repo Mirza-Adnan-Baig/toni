@@ -80,9 +80,8 @@ class Ears:
 
 class Mouth:
     def __init__(self, cfg):
-        from piper import PiperVoice, SynthesisConfig
-        self.voice = PiperVoice.load(str(MODELS / "piper" / f"{cfg['voice']}.onnx"))
-        self.syn = SynthesisConfig(length_scale=1.0 / cfg["speed"])
+        from . import voices
+        self.engine = voices.load(cfg["voice"], cfg["speed"])
         self.dev = cfg["speaker_device"]
         self.t = cfg["t"]
 
@@ -100,8 +99,8 @@ class Mouth:
 
         def producer():
             try:
-                for ch in self.voice.synthesize(text, syn_config=self.syn):
-                    q.put((ch.audio_float_array, ch.sample_rate))
+                for item in self.engine.synth(text):
+                    q.put(item)
             finally:
                 q.put(None)
 

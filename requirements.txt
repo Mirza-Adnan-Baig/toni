@@ -1,5 +1,6 @@
 ollama
 faster-whisper
 piper-tts
+kokoro-onnx
 sounddevice
 numpy

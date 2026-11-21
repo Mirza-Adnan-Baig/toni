@@ -74,10 +74,15 @@ $venvPy = Join-Path $PSScriptRoot ".venv\Scripts\python.exe"
 & $venvPy -m pip install -r requirements.txt
 if ($LASTEXITCODE -ne 0) { throw "Package install failed. Check your internet and run this again." }
 
-Step 6 "Downloading voice and hearing models (about 1 GB)"
+Step 6 "Downloading voice and hearing models (about 1.5 GB)"
 New-Item -ItemType Directory -Force -Path "models" | Out-Null
 New-Item -ItemType Directory -Force -Path "models\piper" | Out-Null
-foreach ($v in @("en_US-amy-medium", "en_GB-jenny_dioco-medium", "de_DE-kerstin-medium", "de_DE-ramona-low")) {
+# Kokoro: very natural English voices (many to choose from in the dashboard)
+$kbase = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0"
+Download "$kbase/kokoro-v1.0.onnx" "models\kokoro-v1.0.onnx"
+Download "$kbase/voices-v1.0.bin" "models\voices-v1.0.bin"
+# Piper: English + German voices
+foreach ($v in @("en_US-amy-medium", "en_US-lessac-high", "en_US-ljspeech-high", "en_GB-jenny_dioco-medium", "en_GB-cori-high", "de_DE-kerstin-medium", "de_DE-ramona-low", "de_DE-thorsten-high", "de_DE-mls-medium")) {
     if (-not (Test-Path "models\piper\$v.onnx.json")) {
         $ErrorActionPreference = "Continue"   # piper prints progress on stderr
         & $venvPy -m piper.download_voices $v --download-dir "models\piper" 2>&1 | Out-Null

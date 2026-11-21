@@ -8,7 +8,7 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
-from . import autostart, config
+from . import autostart, config, voices
 from .core import Toni
 from .store import pick_folder
 
@@ -30,7 +30,7 @@ def make_server(toni, port=PORT, token=None):
         return out
 
     def cfg_public():
-        return {k: toni.cfg[k] for k in config.EDITABLE} | {"voices": config.voices(), "autostart": autostart.enabled()}
+        return {k: toni.cfg[k] for k in config.EDITABLE} | {"voices": voices.catalog(), "autostart": autostart.enabled()}
 
     # ---- GET handlers: (query dict) -> json ----
     def poll(q):
@@ -134,7 +134,17 @@ def make_server(toni, port=PORT, token=None):
         threading.Timer(0.5, lambda: os._exit(0)).start()
         return {"ok": True}
 
+    def preview(d):
+        vid = d["voice"]
+        if vid not in {v["id"] for v in voices.catalog()}:
+            raise ValueError("Unknown voice.")
+        lang = "en" if vid.startswith("kokoro:") else vid.split(":")[-1][:2]
+        text = config.TEXT.get(lang, config.TEXT["en"])["sample"].format(name=toni.cfg["name"])
+        return voices.wav_bytes(voices.load(vid, float(d.get("speed") or toni.cfg["speed"])), text)
+
     POST = {
+        "/api/voice/preview": preview,
+        "/api/voice/add": lambda d: voices.add_piper(d["name"].strip()) or {"ok": True},
         "/api/quit": quit_,
         "/api/autostart": lambda d: autostart.set_enabled(bool(d.get("on"))) or {"ok": True},
         "/api/send": send, "/api/stop": stop, "/api/confirm": confirm, "/api/voice": voice,
@@ -162,10 +172,19 @@ def make_server(toni, port=PORT, token=None):
         def _route(self, table, arg):
             u = urlparse(self.path)
             fn = table.get(u.path)
+            if u.path == "/api/voice/preview":
+                fn = preview
             if fn is None:
                 return self._send({"error": "not found"}, 404)
             try:
-                self._send(fn(arg(u)))
+                out = fn(arg(u))
+                if isinstance(out, bytes):
+                    self.send_response(200)
+                    self.send_header("Content-Type", "audio/wav")
+                    self.send_header("Content-Length", str(len(out)))
+                    self.end_headers()
+                    return self.wfile.write(out)
+                self._send(out)
             except (ValueError, KeyError, FileNotFoundError, NotADirectoryError, PermissionError) as e:
                 self._send({"error": str(e) or e.__class__.__name__}, 400)
             except Exception as e:
