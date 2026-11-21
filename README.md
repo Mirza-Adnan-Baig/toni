@@ -152,7 +152,9 @@ Tips: pick a name with 2-3 clear syllables that is not an everyday word ("Nova",
 - Installed voices (about 40):
   - **Kokoro** (English only, the most natural-sounding): many female and male voices, US and UK. Default: Heart.
   - **Piper** (English and German): e.g. `en_US-lessac-high`, `en_GB-cori-high`, `de_DE-kerstin-medium`, `de_DE-ramona-low`, `de_DE-thorsten-high` (male), `de_DE-mls-medium`.
-  - German voices are currently Piper only. They sound more synthetic than Kokoro's English ones.
+  - **Chatterbox** (English and German, optional): the most human-sounding, but big and slow (about 7 s per sentence on a mid-range GPU, uses ~3.5 GB of graphics memory, so it competes with the AI model). To add it, double-click **Install Chatterbox voices.bat** (about 6 GB download, 10-30 minutes), restart Nova, then pick "Chatterbox" in the voice dropdown. Not tested on the RTX 5080 yet.
+  - Without Chatterbox, German voices are Piper only, which sounds more synthetic than Kokoro's English.
+  - Good to know: every voice has trade-offs. Piper is fast and light, Kokoro is natural but English only, Chatterbox is the most human but slow. Use **Listen** to compare.
 - **Speaking speed** slider (1.0 is normal).
 - More Piper voices: listen at https://rhasspy.github.io/piper-samples/ , then type the voice name (e.g. `de_DE-thorsten-high`) into **Add another Piper voice** in Settings and press Add. Needs internet once.
 

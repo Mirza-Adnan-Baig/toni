@@ -138,7 +138,7 @@ def make_server(toni, port=PORT, token=None):
         vid = d["voice"]
         if vid not in {v["id"] for v in voices.catalog()}:
             raise ValueError("Unknown voice.")
-        lang = "en" if vid.startswith("kokoro:") else vid.split(":")[-1][:2]
+        lang = "en" if vid.startswith("kokoro:") else vid.split(":")[-1][:2]  # chatterbox ids are the language
         text = config.TEXT.get(lang, config.TEXT["en"])["sample"].format(name=toni.cfg["name"])
         return voices.wav_bytes(voices.load(vid, float(d.get("speed") or toni.cfg["speed"])), text)
 

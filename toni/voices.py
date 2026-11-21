@@ -20,8 +20,9 @@ def split(voice_id):
     return (eng, name) if name else ("piper", eng)
 
 
-def _lang(eng, name):
-    return "en" if eng == "kokoro" else name[:2]
+def chatterbox_installed():
+    import importlib.util
+    return importlib.util.find_spec("chatterbox") is not None
 
 
 def catalog():
@@ -40,6 +41,10 @@ def catalog():
             if n[:2] in KOKORO_NOTE:
                 out.append({"id": "kokoro:" + n, "label": f"Kokoro - {n[3:].title()} ({KOKORO_NOTE[n[:2]]})",
                             "lang": "en", "engine": "kokoro"})
+    if chatterbox_installed():
+        for lang, nm in (("de", "German"), ("en", "English")):
+            out.append({"id": "chatterbox:" + lang, "label": f"Chatterbox - {nm} (most human, slow, uses ~3.5 GB GPU)",
+                        "lang": lang, "engine": "chatterbox"})
     return out
 
 
@@ -77,11 +82,30 @@ class KokoroEngine:
             yield s, sr
 
 
+class ChatterboxEngine:
+    """Natural multilingual voice (MIT license). Optional: run 'Install Chatterbox voices.bat' first."""
+    _model = None
+
+    def __init__(self, lang, speed):
+        import torch
+        from chatterbox.mtl_tts import ChatterboxMultilingualTTS
+        self.lang = lang
+        if ChatterboxEngine._model is None:
+            ChatterboxEngine._model = ChatterboxMultilingualTTS.from_pretrained(
+                device="cuda" if torch.cuda.is_available() else "cpu")
+        self.m = ChatterboxEngine._model
+
+    def synth(self, text):
+        for part in [p for p in re.split(r"(?<=[.!?:])\s+", text) if p.strip()]:
+            wav = self.m.generate(part, language_id=self.lang)
+            yield wav.squeeze().cpu().numpy(), self.m.sr
+
+
 def load(voice_id, speed=1.0):
     key = (voice_id, round(speed, 2))
     if key not in _cache:
         eng, name = split(voice_id)
-        _cache[key] = (KokoroEngine if eng == "kokoro" else PiperEngine)(name, speed)
+        _cache[key] = {"kokoro": KokoroEngine, "chatterbox": ChatterboxEngine}.get(eng, PiperEngine)(name, speed)
     return _cache[key]
 
 

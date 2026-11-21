@@ -9,6 +9,7 @@ URL = "http://127.0.0.1:8765"
 
 
 def _prepare(background):
+    os.environ.setdefault("HF_HOME", str(config.MODELS / "hf"))  # model cache stays inside the app folder
     os.environ.setdefault("HF_HUB_OFFLINE", "1")  # never go online after install
     try:  # be nice to games and other programs: run at below-normal priority
         import ctypes
