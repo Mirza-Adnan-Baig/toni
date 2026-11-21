@@ -1,6 +1,6 @@
 @echo off
 cd /d "%~dp0"
-title Toni (text)
+title Nova (text)
 set HF_HUB_OFFLINE=1
 ".venv\Scripts\python.exe" -m toni --text
 pause

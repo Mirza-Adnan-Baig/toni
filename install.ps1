@@ -1,4 +1,4 @@
-# Toni installer - run by double-clicking "Install Toni.bat". Safe to run again if anything fails.
+# Nova installer - run by double-clicking "Install Nova.bat". Safe to run again if anything fails.
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 $Model = "gpt-oss:20b"
@@ -23,7 +23,7 @@ function Download($url, $dest) {
     if ($LASTEXITCODE -ne 0) { throw "Download failed: $url" }
 }
 
-Write-Host "=== Installing Toni (offline AI assistant) ===" -ForegroundColor Green
+Write-Host "=== Installing Nova (offline AI assistant) ===" -ForegroundColor Green
 Write-Host "Needs about 20 GB free disk and a one-time internet connection. Takes 15-40 minutes."
 
 Step 1 "Checking your graphics card"
@@ -67,25 +67,34 @@ Step 4 "Downloading the AI model $Model (about 13 GB - be patient)"
 & $ollama pull $Model
 if ($LASTEXITCODE -ne 0) { throw "Model download failed. Check your internet and run this again." }
 
-Step 5 "Setting up Toni's programs"
+Step 5 "Setting up the assistant's programs"
 if (-not (Test-Path ".venv\Scripts\python.exe")) { & $Py311 -m venv .venv }
 $venvPy = Join-Path $PSScriptRoot ".venv\Scripts\python.exe"
 & $venvPy -m pip install --upgrade pip
 & $venvPy -m pip install -r requirements.txt
 if ($LASTEXITCODE -ne 0) { throw "Package install failed. Check your internet and run this again." }
 
-Step 6 "Downloading voice and hearing models (about 800 MB)"
+Step 6 "Downloading voice and hearing models (about 1 GB)"
 New-Item -ItemType Directory -Force -Path "models" | Out-Null
-$base = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0"
-Download "$base/kokoro-v1.0.onnx" "models\kokoro-v1.0.onnx"
-Download "$base/voices-v1.0.bin" "models\voices-v1.0.bin"
-& $venvPy -c "from faster_whisper import download_model; download_model('small.en', output_dir=r'models\whisper-small.en')"
-if ($LASTEXITCODE -ne 0) { throw "Hearing model download failed. Run this again." }
+New-Item -ItemType Directory -Force -Path "models\piper" | Out-Null
+foreach ($v in @("en_US-amy-medium", "en_GB-jenny_dioco-medium", "de_DE-kerstin-medium", "de_DE-ramona-low")) {
+    if (-not (Test-Path "models\piper\$v.onnx.json")) {
+        $ErrorActionPreference = "Continue"   # piper prints progress on stderr
+        & $venvPy -m piper.download_voices $v --download-dir "models\piper" 2>&1 | Out-Null
+        $ErrorActionPreference = "Stop"
+        if (-not (Test-Path "models\piper\$v.onnx.json")) { throw "Voice download failed ($v). Run this again." }
+    }
+    Write-Host "  voice ready: $v"
+}
+if (-not (Test-Path "models\whisper-small\model.bin")) {
+    & $venvPy -c "from faster_whisper import download_model; download_model('small', output_dir=r'models\whisper-small')"
+    if ($LASTEXITCODE -ne 0) { throw "Hearing model download failed. Run this again." }
+}
 
 Step 7 "Creating desktop shortcuts"
 $desk = [Environment]::GetFolderPath("Desktop")
 $sh = New-Object -ComObject WScript.Shell
-foreach ($pair in @(@("Toni", "Start Toni.bat"), @("Toni (text chat)", "Toni Text Chat.bat"), @("Toni check", "Toni Check.bat"))) {
+foreach ($pair in @(@("Nova", "Start Nova.bat"), @("Nova (text chat)", "Nova Text Chat.bat"), @("Nova check", "Nova Check.bat"), @("Nova language", "Language.bat"))) {
     $lnk = $sh.CreateShortcut("$desk\$($pair[0]).lnk")
     $lnk.TargetPath = Join-Path $PSScriptRoot $pair[1]
     $lnk.WorkingDirectory = $PSScriptRoot
@@ -94,5 +103,5 @@ foreach ($pair in @(@("Toni", "Start Toni.bat"), @("Toni (text chat)", "Toni Tex
 
 Write-Host ""
 Write-Host "=== Done! ===" -ForegroundColor Green
-Write-Host "1. Double-click 'Toni check' on the desktop to test speakers, mic and brain."
-Write-Host "2. Then double-click 'Toni' and say: 'Toni, what time is it?'"
+Write-Host "1. Double-click 'Nova check' on the desktop to test speakers, mic and brain."
+Write-Host "2. Then double-click 'Nova' (a browser window opens) and say: 'Nova, what time is it?'"
